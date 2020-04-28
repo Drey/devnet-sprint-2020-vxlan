@@ -1,0 +1,25 @@
+---
+- name: Configuring BGP neighbors
+  nxos_bgp_neighbor:
+    asn: "{{ bgp_asn }}"
+    neighbor: "{{ bgp_neighbors_prefix }}"
+    remote_as: "{{ bgp_asn }}"
+    update_source: "Loopback0"
+
+- name: Configuring BGP IPv4 address-family
+  nxos_bgp_neighbor_af:
+    asn: "{{ bgp_asn }}"
+    neighbor: "{{ bgp_neighbors_prefix }}"
+    afi: ipv4
+    safi: unicast
+    send_community: both
+    route_reflector_client: true
+
+- name: Configuring BGP EVPN address-family
+  nxos_bgp_neighbor_af:
+    asn: "{{ bgp_asn }}"
+    neighbor: "{{ bgp_neighbors_prefix }}"
+    afi: l2vpn
+    safi: evpn
+    send_community: both
+    route_reflector_client: true

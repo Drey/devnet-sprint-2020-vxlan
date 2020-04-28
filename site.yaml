@@ -1,0 +1,2 @@
+---
+- import_playbook: vxlan-evpn-fabric.yaml

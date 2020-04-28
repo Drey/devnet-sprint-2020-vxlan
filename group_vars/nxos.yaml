@@ -1,0 +1,55 @@
+---
+#
+# Protocols vars
+#
+ospf_underlay_proc_name: UNDERLAY
+bgp_asn: 65521
+pim_anycast_rp_addr: 10.255.253.1
+pim_bum_range: 239.239.239.0/24
+
+#
+# Underlay routed interfaces
+#
+routed_underlay_if:
+  spine1:
+    - {name: Ethernet1/1, ipv4: 10.100.0.1/30}
+    - {name: Ethernet1/2, ipv4: 10.100.0.5/30}
+    - {name: Ethernet1/3, ipv4: 10.100.0.9/30}
+    - {name: Ethernet1/4, ipv4: 10.100.0.13/30}
+    - {name: Loopback0, ipv4: 10.255.255.1/32}
+    - {name: Loopback1, ipv4: 10.255.253.1/32}
+  spine2:
+    - {name: Ethernet1/1, ipv4: 10.100.0.17/30}
+    - {name: Ethernet1/2, ipv4: 10.100.0.21/30}
+    - {name: Ethernet1/3, ipv4: 10.100.0.25/30}
+    - {name: Ethernet1/4, ipv4: 10.100.0.29/30}
+    - {name: Loopback0, ipv4: 10.255.255.2/32}
+    - {name: Loopback1, ipv4: 10.255.253.1/32}
+  leaf1:
+    - {name: Ethernet1/3, ipv4: 10.100.0.2/30}
+    - {name: Ethernet1/4, ipv4: 10.100.0.18/30}
+    - {name: Loopback0, ipv4: 10.255.255.3/32}
+    - {name: Loopback1, ipv4: 10.255.254.1/32}
+    - {name: Loopback1, ipv4: 10.255.254.3/32}
+    - {name: vlan10, ipv4: 10.100.0.33/30, id: 10}
+  leaf2:
+    - {name: Ethernet1/3, ipv4: 10.100.0.6/30}
+    - {name: Ethernet1/4, ipv4: 10.100.0.22/30}
+    - {name: Loopback0, ipv4: 10.255.255.4/32}
+    - {name: Loopback1, ipv4: 10.255.254.2/32}
+    - {name: Loopback1, ipv4: 10.255.254.3/32}
+    - {name: vlan10, ipv4: 10.100.0.34/30, id: 10}
+  leaf3:
+    - {name: Ethernet1/3, ipv4: 10.100.0.10/30}
+    - {name: Ethernet1/4, ipv4: 10.100.0.26/30}
+    - {name: Loopback0, ipv4: 10.255.255.5/32}
+    - {name: Loopback1, ipv4: 10.255.254.4/32}
+    - {name: Loopback1, ipv4: 10.255.254.6/32}
+    - {name: vlan10, ipv4: 10.100.0.37/30, id: 10}
+  leaf4:
+    - {name: Ethernet1/3, ipv4: 10.100.0.14/30}
+    - {name: Ethernet1/4, ipv4: 10.100.0.30/30}
+    - {name: Loopback0, ipv4: 10.255.255.6/32}
+    - {name: Loopback1, ipv4: 10.255.254.5/32}
+    - {name: Loopback1, ipv4: 10.255.254.6/32}
+    - {name: vlan10, ipv4: 10.100.0.38/30, id: 10}

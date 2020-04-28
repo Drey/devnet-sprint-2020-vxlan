@@ -1,0 +1,29 @@
+---
+- name: Configuring spine switches
+  hosts: spines
+  gather_facts: true
+  any_errors_fatal: true
+  roles:
+    - common
+    - spine
+
+- name: Configuring leaf switches
+  hosts: leafs
+  gather_facts: true
+  any_errors_fatal: true
+  roles:
+    - common
+    - leaf
+
+- name: Final tasks
+  hosts: nxos
+  gather_facts: false
+  any_errors_fatal: true
+
+  tasks:
+
+    - name: Saving devices configuration
+      nxos_config:
+        save_when: modified
+      tags:
+        always

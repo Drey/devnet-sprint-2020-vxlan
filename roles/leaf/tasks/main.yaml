@@ -1,0 +1,7 @@
+---
+- include: vpc.yaml
+- include: pim.yaml
+- include: bgp.yaml
+- include: anycast_gateway.yaml
+- include: nve.yaml
+- include: evpn-services.yaml

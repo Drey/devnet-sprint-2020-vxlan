@@ -1,0 +1,41 @@
+---
+- name: Configuring BGP neighbors
+  nxos_bgp_neighbor:
+    asn: "{{ bgp_asn }}"
+    neighbor: "{{ item }}"
+    remote_as: "{{ bgp_asn }}"
+    update_source: Loopback0
+  loop: "{{ bgp_neighbors }}"
+  loop_control:
+    label: "Neighbor {{ item }}"
+
+- name: Configuring BGP neighbors for IPv4 address-family
+  nxos_bgp_neighbor_af:
+    asn: "{{ bgp_asn }}"
+    neighbor: "{{ item }}"
+    afi: ipv4
+    safi: unicast
+    send_community: both
+  loop: "{{ bgp_neighbors }}"
+  loop_control:
+    label: "Neighbor {{ item }}"
+
+- name: Configuring BGP neighbors for EVPN address-family
+  nxos_bgp_neighbor_af:
+    asn: "{{ bgp_asn }}"
+    neighbor: "{{ item }}"
+    afi: l2vpn
+    safi: evpn
+    send_community: both
+    route_reflector_client: "false"
+  loop: "{{ bgp_neighbors }}"
+  loop_control:
+    label: "Neighbor {{ item }}"
+
+- name: Configuring route-map used for the direct route redistribution
+  nxos_config:
+    lines:
+      - match source-protocol direct
+      - match tag {{ bgp_asn }}
+    parents:
+      - route-map FABRIC-RMAP-REDIST-SUBNET permit 10

@@ -1,0 +1,188 @@
+---
+- name: Loading service definitaions
+  include_vars:
+    file: services.yaml
+  delegate_to: localhost
+  tags:
+    - evpn-services
+    - l2-vni
+    - l3-vni
+
+- name: Configuring VLAN to VNI mappings
+  nxos_vlan:
+    aggregate: >
+      {{ (l2_vnis + l3_vnis) |
+      map_dict_list({'vlan_id': 'vlan_id',
+      'state': 'state',
+      'vni': 'mapped_vni'}) }}
+  tags:
+    - evpn-services
+    - l2-vni
+    - l3-vni
+
+- name: Configuring VRFs
+  nxos_vrf:
+    aggregate: "{{ l3_vnis | filter_dict(['vni', 'vrf', 'state']) }}"
+    rd: auto
+  tags:
+    - evpn-services
+    - l3-vni
+
+- name: Configuring EVPN route-targets for L3 VNIs
+  nxos_config:
+    lines:
+      - route-target both auto
+      - route-target both auto evpn
+    parents:
+      - vrf context {{ item.vrf }}
+      - address-family ipv4 unicast
+  loop: "{{ l3_vnis }}"
+  loop_control:
+    label: "VRF: {{ item.vrf }}"
+  when: "item.state == 'present'"
+  tags:
+    - evpn-services
+    - l3-vni
+
+- name: Removing EVPN route-targets for L3 VNIs
+  nxos_config:
+    lines:
+      - no route-target both auto
+      - no route-target both auto evpn
+    parents:
+      - vrf context {{ item.vrf }}
+      - address-family ipv4 unicast
+  loop: "{{ l3_vnis }}"
+  loop_control:
+    label: "VRF: {{ item.vrf }}"
+  when: "item.state == 'absent'"
+  tags:
+    - evpn-services
+    - l3-vni
+
+- name: Configuring EVPN for L2 VNIs
+  nxos_evpn_vni:
+    vni: "{{ item.vni }}"
+    route_distinguisher: auto
+    route_target_import: auto
+    route_target_export: auto
+    route_target_both: auto
+    state: "{{ item.state }}"
+  loop: "{{ l2_vnis }}"
+  loop_control:
+    label: "L2 VNI: Vlan{{ item.vni }}"
+  tags:
+    - evpn-services
+    - l2-vni
+
+- name: Configuring SVI downlink faced SVIs
+  nxos_interface:
+    admin_state: up
+    aggregate: >
+      {{ (l3_vnis + l2_vnis) |
+      interface_format('vlan_id', prefix='vlan') |
+      map_dict_list({'vlan_id': 'name', 'state': 'state'}) }}
+  tags:
+    - evpn-services
+    - l2-vni
+    - l3-vni
+
+- name: Moving SVIs to appropriate VRFs
+  nxos_vrf_interface:
+    vrf: "{{ item.vrf }}"
+    interface: "vlan{{ item.vlan_id }}"
+  loop: "{{ l3_vnis }} + {{ l2_vnis }}"
+  loop_control:
+    label: "SVI: Vlan{{ item.vlan_id }} VRF: {{ item.vrf }}"
+  when: "item.state == 'present'"
+  tags:
+    - evpn-services
+    - l2-vni
+    - l3-vni
+
+- name: Adjusting MTU on L3 VNI SVIs
+  nxos_interface:
+    mtu: 9216
+    aggregate: >
+      {{ l3_vnis | interface_format('vlan_id', prefix='vlan') |
+      map_dict_list({'vlan_id': 'name', 'state': 'state'}) }}
+  tags:
+    - evpn-services
+    - l3-vni
+
+- name: Enabling IP Forward option on L3 VNI
+  nxos_interface:
+    ip_forward: enable
+    aggregate: >
+      {{ l3_vnis | interface_format('vlan_id', prefix='vlan') |
+      map_dict_list({'vlan_id': 'name', 'state': 'state'}) }}
+  tags:
+    - evpn-services
+    - l3-vni
+
+- name: Enabling VRFs in MP-BGP
+  nxos_bgp_af:
+    asn: "{{ bgp_asn }}"
+    vrf: "{{ item.vrf }}"
+    afi: ipv4
+    safi: unicast
+    advertise_l2vpn_evpn: true
+    redistribute:
+      - ['direct', 'FABRIC-RMAP-REDIST-SUBNET']
+    state: "{{ item.state }}"
+  loop: "{{ l3_vnis }}"
+  loop_control:
+    label: "VRF: {{ item.vrf }}"
+  tags:
+    - evpn-services
+    - l3-vni
+
+- name: Enabling Anycast IP Gateway on L2 VNI SVIs
+  nxos_interface:
+    fabric_forwarding_anycast_gateway: true
+    aggregate: >
+      {{ l2_vnis | interface_format('vlan_id', prefix='vlan') |
+      map_dict_list({'vlan_id': 'name',
+      'state': 'state',
+      'descr': 'description'}) }}
+  tags:
+    - evpn-services
+    - l2-vni
+
+- name: Configuring IP addresses on L2 VNI SVIs
+  nxos_l3_interface:
+    aggregate: >
+      {{ l2_vnis | interface_format('vlan_id', prefix='vlan') |
+      map_dict_list({'vlan_id': 'name',
+      'state': 'state',
+      'ipv4': 'ipv4'}) }}
+  tags:
+    - evpn-services
+    - l2-vni
+
+- name: Configuring L3 VNIs on the NVE interface
+  nxos_vxlan_vtep_vni:
+    interface: nve1
+    vni: "{{ item.vni }}"
+    assoc_vrf: true
+    state: "{{ item.state }}"
+  loop: "{{ l3_vnis }}"
+  loop_control:
+    label: "L3 VNI: {{ item.vni }}"
+  tags:
+    - evpn-services
+    - l3-vni
+
+- name: Configuring L2 VNIs on the NVE interface
+  nxos_vxlan_vtep_vni:
+    interface: nve1
+    vni: "{{ item.vni }}"
+    multicast_group: "{{ item.mcast }}"
+    state: "{{ item.state }}"
+    # suppress_arp: true # Not supported on NX-OSv
+  loop: "{{ l2_vnis }}"
+  loop_control:
+    label: "L2 VNI: {{ item.vni }}"
+  tags:
+    - evpn-services
+    - l2-vni

@@ -1,0 +1,16 @@
+---
+- name: Configuring PIM Anycast RP range
+  nxos_pim_rp_address:
+    rp_address: "{{ pim_anycast_rp_addr }}"
+    group_list: "{{ pim_bum_range }}"
+
+- name: Configuring PIM Anycast RP
+  nxos_config:
+    lines: >
+      ip pim anycast-rp
+      {{ pim_anycast_rp_addr }}
+      {{ item.ipv4.split('/')[0] }}
+  loop: "{{ routed_underlay_if[inventory_hostname] }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: '"Loopback1" in item.name'

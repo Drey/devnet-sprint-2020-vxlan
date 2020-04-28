@@ -1,0 +1,10 @@
+---
+- name: Enabling NXOS features
+  nxos_feature:
+    feature: "{{ item }}"
+  loop: "{{ features }}"
+
+- include: interfaces.yaml
+- include: ospf.yaml
+- include: pim.yaml
+- include: overlay.yaml

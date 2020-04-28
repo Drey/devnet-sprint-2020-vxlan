@@ -1,0 +1,19 @@
+---
+#
+# Spine switches feature list
+#
+features:
+  - ospf
+  - pim
+  - bgp
+  - nxapi
+
+#
+# BGP settings
+#
+bgp_neighbors_prefix: 10.255.255.0/24
+
+#
+# Anycast RP settings
+#
+anycast_rp_address: 10.255.253.1

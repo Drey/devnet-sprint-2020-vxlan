@@ -1,0 +1,24 @@
+---
+- name: Configuring vPC domain
+  nxos_vpc:
+    domain: "{{ vpc_domain_id }}"
+    pkl_dest: "{{ hostvars[vpc_peer].ansible_host }}"
+    pkl_src: "{{ hostvars[inventory_hostname].ansible_host }}"
+    peer_gw: true
+    auto_recovery: true
+
+- name: Adding aggregated interface
+  nxos_linkagg:
+    group: "{{ vpc_domain_peer_link_num }}"
+    members: "{{ vpc_peer_link_members }}"
+    force: true
+
+- name: Configuring the trunk mode on vPC peer-link
+  nxos_l2_interface:
+    name: "Port-channel{{ vpc_domain_peer_link_num }}"
+    mode: trunk
+
+- name: Enabling vPC peer-link
+  nxos_vpc_interface:
+    portchannel: "{{ vpc_domain_peer_link_num }}"
+    peer_link: true

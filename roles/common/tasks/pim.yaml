@@ -1,0 +1,16 @@
+---
+- name: Configuring PIM SSM scope
+  nxos_pim:
+    ssm_range: "232.0.0.0/8"
+
+- name: Enabling PIM sparse mode on underlay interfaces
+  nxos_pim_interface:
+    interface: "{{ item.name }}"
+    sparse: true
+  loop: "{{ routed_underlay_if[inventory_hostname] }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: >
+    "vlan" in item.name or
+    "Ethernet" in item.name or
+    "Loopback0" in item.name

@@ -1,0 +1,4 @@
+---
+- name: Configuring Anycast IP Gateway
+  nxos_overlay_global:
+    anycast_gateway_mac: "ac:de:48:00:11:22"

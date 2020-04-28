@@ -1,0 +1,21 @@
+spine1 ansible_host=10.254.254.57
+spine2 ansible_host=10.254.254.58
+
+leaf1 ansible_host=10.254.254.52
+leaf2 ansible_host=10.254.254.53
+leaf3 ansible_host=10.254.254.54
+leaf4 ansible_host=10.254.254.55
+
+[spines]
+spine1
+spine2
+
+[leafs]
+leaf1
+leaf2
+leaf3
+leaf4
+
+[nxos:children]
+spines
+leafs

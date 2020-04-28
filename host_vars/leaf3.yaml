@@ -1,0 +1,6 @@
+---
+#
+# vPC domain settings
+#
+vpc_domain_id: 11
+vpc_peer: 'leaf4'

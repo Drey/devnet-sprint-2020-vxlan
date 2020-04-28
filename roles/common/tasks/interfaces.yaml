@@ -1,0 +1,53 @@
+---
+- name: Enabling routed underlay interfaces
+  nxos_interface:
+    interface: "{{ item.name }}"
+    mode: layer3
+    admin_state: up
+  loop: "{{ routed_underlay_if[inventory_hostname] }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: '"Ethernet" in item.name'
+
+- name: Adding underlay loopback interfaces
+  nxos_interface:
+    name: "{{ item.name }}"
+  loop: "{{ routed_underlay_if[inventory_hostname] }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: '"Loopback" in item.name'
+
+- name: Creating underlay VLAN
+  nxos_vlan:
+    vlan_id: "{{ item.id }}"
+  loop: "{{ routed_underlay_if[inventory_hostname] }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: '"vlan" in item.name'
+
+- name: Adding underlay SVI interfaces
+  nxos_interface:
+    name: "{{ item.name }}"
+  loop: "{{ routed_underlay_if[inventory_hostname] }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: '"vlan" in item.name'
+
+- name: Enabling jumbo frame support on underlay interfaces
+  nxos_interface:
+    mtu: 9216
+    interface: "{{ item.name }}"
+  loop: "{{ routed_underlay_if[inventory_hostname] }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: '"Ethernet" in item.name or "vlan" in item.name'
+
+- name: Assigning IP address on underlay interfaces
+  nxos_ip_interface:
+    interface: "{{ item.name }}"
+    addr: "{{ item.ipv4.split('/')[0] }}"
+    mask: "{{ item.ipv4.split('/')[1] }}"
+    allow_secondary: true
+  loop: "{{ routed_underlay_if[inventory_hostname] }}"
+  loop_control:
+    label: "{{ item.name }}"

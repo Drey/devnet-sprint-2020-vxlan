@@ -1,0 +1,28 @@
+---
+#
+# Leaf switches feature list
+#
+features:
+  - vpc
+  - interface-vlan
+  - vn-segment-vlan-based
+  - nv overlay
+  - ospf
+  - pim
+  - bgp
+
+#
+# vPC domain settings
+#
+vpc_domain_kpl_src_addr: "{{ ansible_host }}"
+vpc_domain_peer_link_num: 1
+vpc_peer_link_members:
+  - Ethernet1/1
+  - Ethernet1/2
+
+#
+# BGP settings
+#
+bgp_neighbors:
+  - 10.255.255.1
+  - 10.255.255.2

@@ -1,0 +1,6 @@
+---
+#
+# vPC domain settings
+#
+vpc_domain_id: 10
+vpc_peer: 'leaf2'

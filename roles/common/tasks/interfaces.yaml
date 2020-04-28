@@ -48,7 +48,7 @@
       - name: "{{ item.name }}"
         ipv4:
           - address: "{{ item.ipv4 }}"
-            allow_secondary: True
+            secondary: True
   loop: "{{ routed_underlay_if[inventory_hostname] }}"
   loop_control:
     label: "{{ item.name }}"

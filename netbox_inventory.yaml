@@ -1,0 +1,7 @@
+plugin: netbox
+api_endpoint: http://10.255.255.100
+config_context: False
+group_names_raw: True
+group_by:
+  - device_roles
+  - platforms

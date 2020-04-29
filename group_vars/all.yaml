@@ -8,3 +8,4 @@ ansible_connect_timeout: 400
 connect_retry_timeout: 500
 ansible_command_timeout: 200
 buffer_read_timeout: 3
+netbox_url: http://10.255.255.100

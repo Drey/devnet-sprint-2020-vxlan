@@ -32,10 +32,11 @@
   loop_control:
     label: "{{ item.name }}"
   when: '"vlan" in item.name'
+  tags: vpc
 
 - name: Enabling jumbo frame support on underlay interfaces
   nxos_interface:
-    mtu: 9216
+    mtu: "9216"
     interface: "{{ item.name }}"
   loop: "{{ routed_underlay_if[inventory_hostname] }}"
   loop_control:

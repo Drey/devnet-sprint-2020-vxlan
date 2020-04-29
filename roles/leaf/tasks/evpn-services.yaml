@@ -149,16 +149,149 @@
     - evpn-services
     - l2-vni
 
-- name: Configuring IP addresses on L2 VNI SVIs
-  nxos_l3_interface:
-    aggregate: >
-      {{ l2_vnis | interface_format('vlan_id', prefix='vlan') |
-      map_dict_list({'vlan_id': 'name',
-      'state': 'state',
-      'ipv4': 'ipv4'}) }}
+- name: Create SVI interface in NetBox
+  netbox_interface:
+    netbox_url: "{{ netbox_url }}"
+    netbox_token: "{{ NETBOX_TOKEN }}"
+    data:
+      device: "{{ inventory_hostname }}"
+      name: "Vlan{{ item['vlan_id'] }}"
+      type: virtual
+    state: present
+  loop: "{{ l2_vnis }}"
   tags:
     - evpn-services
     - l2-vni
+
+- name: Configuring L2VNI addressoing
+  block:
+    - name: Creating prefixes in Netbox
+      netbox_prefix:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ NETBOX_TOKEN }}"
+        data:
+          parent: 172.16.0.0/12
+          prefix_length: 24
+          vrf: Production
+        state: present
+        first_available: yes
+      loop: "{{ l2_vnis }}"
+      register: prefixes
+      run_once: true
+      when: "ansible_play_hosts_all[0] == inventory_hostname"
+      tags:
+        - evpn-services
+        - l2-vni
+
+    - name: "Creating ip addresses for L2VNI SVI interfaces in Netbox - step 1"
+      netbox_ip_address:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ NETBOX_TOKEN }}"
+        data:
+          prefix: "{{ item['prefix']['prefix'] }}"
+          vrf: "Production"
+          role: Anycast
+          interface:
+            name: "Vlan{{ item['item']['vlan_id'] }}"
+            device: "{{ inventory_hostname }}"
+        state: new
+      loop: "{{ prefixes.results }}"
+      loop_control:
+        label: "{{ item['prefix']['prefix'] }}"
+      register: addresses
+      run_once: true
+      when: "ansible_play_hosts_all[0] == inventory_hostname"
+      tags:
+        - evpn-services
+        - l2-vni
+
+    - name: "Creating ip addresses for L2VNI SVI interfaces in Netbox - step 2"
+      netbox_ip_address:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ NETBOX_TOKEN }}"
+        data:
+          address: "{{ item['ip_address']['address'] }}"
+          vrf: "Production"
+          role: Anycast
+          interface:
+            name: "Vlan{{ item['item']['item']['vlan_id'] }}"
+            device: "{{ inventory_hostname }}"
+        state: new
+      loop: "{{ addresses.results }}"
+      loop_control:
+        label: "{{ item['ip_address']['address'] }}"
+      when: "inventory_hostname != ansible_play_hosts_all[0]"
+      tags:
+        - evpn-services
+        - l2-vni
+
+    - name: Configuring IP addresses on L2 VNI SVIs
+      nxos_l3_interface:
+        name: "Vlan{{ item['item']['item']['vlan_id'] }}"
+        ipv4: "{{ item['ip_address']['address'] }}"
+        state: "{{ item['item']['item']['state'] }}"
+      loop: "{{ addresses.results }}"
+      loop_control:
+        label: "Vlan{{ item['item']['item']['vlan_id'] }}: {{ item['ip_address']['address'] }}"
+      tags:
+        - evpn-services
+        - l2-vni
+
+  rescue:
+    - name: Delete prefixes from Netbox
+      netbox_prefix:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ NETBOX_TOKEN }}"
+        data:
+          prefix: "{{ item['prefix']['prefix'] }}"
+        state: absent
+        first_available: yes
+      loop: "{{ prefixes.results }}"
+      loop_control:
+        label: "{{ item['prefix']['prefix'] }}"
+      run_once: true
+      when: "ansible_play_hosts_all[0] == inventory_hostname"
+      ignore_errors: true
+      tags:
+        - always
+
+    - name: Delete ip addresses from L2VNI SVI interfaces from Netbox
+      netbox_ip_address:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ NETBOX_TOKEN }}"
+        data:
+          address: "{{ item['ip_address']['address'] }}"
+          vrf: "Production"
+          role: Anycast
+          interface:
+            name: "Vlan{{ item['item']['item']['vlan_id'] }}"
+            device: "{{ inventory_hostname }}"
+        state: absent
+      loop: "{{ addresses.results }}"
+      loop_control:
+        label: "{{ item['ip_address']['address'] }}"
+      ignore_errors: true
+      tags:
+        - always
+
+    - name: Delete SVI interface from NetBox
+      netbox_interface:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ NETBOX_TOKEN }}"
+        data:
+          device: "{{ inventory_hostname }}"
+          name: "Vlan{{ item['vlan_id'] }}"
+          type: virtual
+        state: absent
+      loop: "{{ l2_vnis }}"
+      ignore_errors: true
+      tags:
+        - always
+
+    - fail:
+        msg: "Eroor! Cannot create NetBox objects or configure L2VNI SVIs"
+      tags:
+        - always
 
 - name: Configuring L3 VNIs on the NVE interface
   nxos_vxlan_vtep_vni:

@@ -36,26 +36,26 @@ routed_underlay_if:
     - {name: Ethernet1/4, ipv4: 10.100.0.18/30}
     - {name: Loopback0, ipv4: 10.255.255.3/32}
     - {name: Loopback1, ipv4: 10.255.254.1/32}
-    - {name: Loopback1, ipv4: 10.255.254.3/32}
-    - {name: vlan10, ipv4: 10.100.0.33/30, id: 10}
+    # - {name: Loopback1, ipv4: 10.255.254.3/32}
+    # - {name: vlan10, ipv4: 10.100.0.33/30, id: 10}
   leaf2:
     - {name: Ethernet1/3, ipv4: 10.100.0.6/30}
     - {name: Ethernet1/4, ipv4: 10.100.0.22/30}
     - {name: Loopback0, ipv4: 10.255.255.4/32}
     - {name: Loopback1, ipv4: 10.255.254.2/32}
-    - {name: Loopback1, ipv4: 10.255.254.3/32}
-    - {name: vlan10, ipv4: 10.100.0.34/30, id: 10}
+    # - {name: Loopback1, ipv4: 10.255.254.3/32}
+    # - {name: vlan10, ipv4: 10.100.0.34/30, id: 10}
   leaf3:
     - {name: Ethernet1/3, ipv4: 10.100.0.10/30}
     - {name: Ethernet1/4, ipv4: 10.100.0.26/30}
     - {name: Loopback0, ipv4: 10.255.255.5/32}
     - {name: Loopback1, ipv4: 10.255.254.4/32}
-    - {name: Loopback1, ipv4: 10.255.254.6/32}
-    - {name: vlan10, ipv4: 10.100.0.37/30, id: 10}
+    # - {name: Loopback1, ipv4: 10.255.254.6/32}
+    # - {name: vlan10, ipv4: 10.100.0.37/30, id: 10}
   leaf4:
     - {name: Ethernet1/3, ipv4: 10.100.0.14/30}
     - {name: Ethernet1/4, ipv4: 10.100.0.30/30}
     - {name: Loopback0, ipv4: 10.255.255.6/32}
     - {name: Loopback1, ipv4: 10.255.254.5/32}
-    - {name: Loopback1, ipv4: 10.255.254.6/32}
-    - {name: vlan10, ipv4: 10.100.0.38/30, id: 10}
+    # - {name: Loopback1, ipv4: 10.255.254.6/32}
+    # - {name: vlan10, ipv4: 10.100.0.38/30, id: 10}

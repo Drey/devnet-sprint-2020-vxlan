@@ -212,7 +212,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             "platforms": self.extract_platform,
             "device_types": self.extract_device_type,
             "config_context": self.extract_config_context,
-            "manufacturers": self.extract_manufacturer
+            "manufacturers": self.extract_manufacturer,
+            "ipam_addresses": self.extract_ipam_addresses,
+            "device_interfaces": self.extract_interfaces
         }
 
     def extract_disk(self, host):
@@ -275,6 +277,18 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def extract_manufacturer(self, host):
         try:
             return [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]]
+        except Exception:
+            return
+    
+    def extract_ipam_addresses(self, host):
+        try:
+            return [self.ipam_address_lookup[host["id"]]]
+        except Exception:
+            return
+    
+    def extract_interfaces(self, host):
+        try:
+            return [self.interfaces_lookup[host["id"]]]
         except Exception:
             return
 
@@ -341,7 +355,43 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         url = self.api_endpoint + "/api/dcim/manufacturers/?limit=0"
         manufacturers = self.get_resource_list(api_url=url)
         self.manufacturers_lookup = dict((manufacturer["id"], manufacturer["name"]) for manufacturer in manufacturers)
+    
+    def refresh_ipam_addresses_lookup(self, host):
+        url = self.api_endpoint + "/api/ipam/ip-addresses/?limit=0&device_id={}".format(host["id"])
+        ipam_addresses = self.get_resource_list(api_url=url)
+        self.ipam_address_lookup = {}
+        if  host["id"] not in self.ipam_address_lookup.keys():
+            self.ipam_address_lookup[host["id"]] = []
+        for address in ipam_addresses:
+            if address["interface"]:
+                addr, prefixlen = address["address"].split("/")
+                self.ipam_address_lookup[host["id"]].append({
+                    "address": address["address"],
+                    "addr": addr,
+                    "prefixlen": prefixlen,
+                    "family": address["family"]["label"].lower(),
+                    "interface": address["interface"]["name"],
+                    "status": address["status"]["value"],
+                    "vrf": address["vrf"]["name"]
+                })
 
+    def refresh_interfaces_lookup(self, host):
+        url = self.api_endpoint + "/api/dcim/interfaces/?limit=0&device_id={}".format(host["id"])
+        interfaces = self.get_resource_list(api_url=url)
+        self.interfaces_lookup = {}
+        if host["id"] not in self.interfaces_lookup:
+            self.interfaces_lookup[host["id"]] = []
+        for interface in interfaces:
+            self.interfaces_lookup[host["id"]].append({
+                "name": interface["name"],
+                "description": interface["description"],
+                "type": interface["type"]["value"],
+                "enabled": interface["enabled"],
+                "mgmt_only": interface["mgmt_only"],
+                "mtu": interface["mtu"],
+                "mac_address": interface["mac_address"]
+            })
+                
     def refresh_lookups(self):
         lookup_processes = (
             self.refresh_sites_lookup,
@@ -351,12 +401,29 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             self.refresh_device_roles_lookup,
             self.refresh_platforms_lookup,
             self.refresh_device_types_lookup,
-            self.refresh_manufacturers_lookup,
+            self.refresh_manufacturers_lookup
         )
 
         thread_list = []
         for p in lookup_processes:
             t = Thread(target=p)
+            thread_list.append(t)
+            t.start()
+
+        for thread in thread_list:
+            thread.join()
+    
+    def refresh_host_lookups(self, host):
+        
+        lookup_processes = (
+            self.refresh_ipam_addresses_lookup,
+            self.refresh_interfaces_lookup
+        )
+
+        thread_list = []
+
+        for p in lookup_processes:
+            t = Thread(target=p, args=(host,))
             thread_list.append(t)
             t.start()
 
@@ -438,6 +505,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         for host in hosts_list:
             hostname = self.extract_name(host=host)
             self.inventory.add_host(host=hostname)
+            self.refresh_host_lookups(host=host)
             self._fill_host_variables(host=host, hostname=hostname)
 
             strict = self.get_option("strict")

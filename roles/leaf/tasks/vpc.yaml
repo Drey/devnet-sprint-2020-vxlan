@@ -6,19 +6,23 @@
     pkl_src: "{{ hostvars[inventory_hostname].ansible_host }}"
     peer_gw: true
     auto_recovery: true
+  tags: vpc
 
 - name: Adding aggregated interface
   nxos_linkagg:
     group: "{{ vpc_domain_peer_link_num }}"
     members: "{{ vpc_peer_link_members }}"
     force: true
+  tags: vpc
 
 - name: Configuring the trunk mode on vPC peer-link
   nxos_l2_interface:
     name: "Port-channel{{ vpc_domain_peer_link_num }}"
     mode: trunk
+  tags: vpc
 
 - name: Enabling vPC peer-link
   nxos_vpc_interface:
     portchannel: "{{ vpc_domain_peer_link_num }}"
     peer_link: true
+  tags: vpc

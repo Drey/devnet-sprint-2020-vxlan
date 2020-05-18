@@ -3,41 +3,28 @@
 # EVPN services
 #
 l3_vnis:
-  - vrf: Tenant1
+  - vrf: Production
     vlan_id: 3000
     rd: auto
     vni: 103000
-    state: present
-  - vrf: Tenant2
-    vlan_id: 3001
-    rd: auto
-    vni: 103001
-    state: present
-  - vrf: Tenant3
-    vlan_id: 3002
-    rd: auto
-    vni: 103002
     state: present
 
 l2_vnis:
   - vni: 101000
     vlan_id: 1000
-    vrf: Tenant1
+    vrf: Production
     mcast: 239.239.239.1
-    ipv4: 10.10.0.1/24
-    descr: Tenant1 SVI
+    descr: K8s
     state: present
   - vni: 101001
     vlan_id: 1001
-    vrf: Tenant2
+    vrf: Production
     mcast: 239.239.239.2
-    ipv4: 10.10.1.1/24
-    descr: Tenant2 SVI
+    descr: VDI
     state: present
   - vni: 101002
     vlan_id: 1002
-    vrf: Tenant3
+    vrf: Production
     mcast: 239.239.239.3
-    ipv4: 10.10.2.1/24
-    descr: Tenant3 SVI
+    descr: Bare metal
     state: present
